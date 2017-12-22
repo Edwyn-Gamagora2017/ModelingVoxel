@@ -16,6 +16,7 @@ class SphereVolume :
         virtual ~SphereVolume();
 
         bool pointInside( vec3 point );
+        CubeVolume getBoundingBox();
 };
 
 #endif // SPHEREVOLUME_H

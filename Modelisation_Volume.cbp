@@ -17,6 +17,7 @@
 					<Add directory="include" />
 					<Add directory="../M_TP01_E01" />
 					<Add directory="forms" />
+					<Add directory="forms/structure" />
 				</Compiler>
 			</Target>
 			<Target title="Release">
@@ -30,6 +31,7 @@
 					<Add directory="include" />
 					<Add directory="../M_TP01_E01" />
 					<Add directory="forms" />
+					<Add directory="forms/structure" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -55,6 +57,8 @@
 		<Unit filename="forms/SphereVolume.h" />
 		<Unit filename="forms/VolumeForm.cpp" />
 		<Unit filename="forms/VolumeForm.h" />
+		<Unit filename="forms/structure/FromTree.cpp" />
+		<Unit filename="forms/structure/FromTree.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="utils.cpp" />
 		<Unit filename="utils.h" />

@@ -22,6 +22,7 @@ class CubeVolume :
         std::deque<vec3> getVertices();
 
         bool pointInside( vec3 point );
+        CubeVolume getBoundingBox();
 };
 
 #endif // CUBEVOLUME_H

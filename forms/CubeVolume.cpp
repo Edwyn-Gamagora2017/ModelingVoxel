@@ -37,3 +37,7 @@ bool CubeVolume::pointInside( vec3 point ){
             point.getZ() >= this->center.getZ() - this->depth/2. &&
             point.getZ() <= this->center.getZ() + this->depth/2.;
 }
+
+CubeVolume CubeVolume::getBoundingBox(){
+    return *this;
+}

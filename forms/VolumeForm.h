@@ -19,10 +19,36 @@ class VolumeForm
         /** Default destructor */
         virtual ~VolumeForm();
 
+        /** \brief given a voxel, verifies which vertices are inside the form
+         *
+         * \param voxel Voxel - the voxel to be evaluated
+         * \return std::deque<vec3> - vertices that are inside the form
+         *
+         */
         std::deque<vec3> voxelVeticesInside( Voxel voxel );
+
+        /** \brief given a voxel, checks if the center of the form is inside de voxel (this way, it is useful to check if the form is inside the voxel)
+         *
+         * \param voxel Voxel - the voxel to be evaluated
+         * \return bool - the center of the form is inside the voxel
+         *
+         */
         bool isCenterInsideVoxel( Voxel voxel );
 
+        /** \brief indicates if a point is inside the form (implemented by each form)
+         *
+         * \param point vec3 - point to be verified
+         * \return virtual bool - POINT is inside the form
+         *
+         */
         virtual bool pointInside( vec3 point ) = 0;
+
+        /** \brief obtains the box that encloses the form
+         *
+         * \return virtual CubeVolume - the box that encloses the form
+         *
+         */
+        virtual CubeVolume getBoundingBox() = 0;
 };
 
 #endif // VOLUMEFORM_H

@@ -61,11 +61,11 @@
 
 1301111162 c:\program files (x86)\codeblocks\mingw\include\winerror.h
 
-1341006776 c:\program files (x86)\codeblocks\mingw\include\string.h
+1341003176 c:\program files (x86)\codeblocks\mingw\include\string.h
 	<_mingw.h>
 	<stddef.h>
 
-1341006770 c:\program files (x86)\codeblocks\mingw\include\_mingw.h
+1341003170 c:\program files (x86)\codeblocks\mingw\include\_mingw.h
 
 1301111148 c:\program files (x86)\codeblocks\mingw\include\basetsd.h
 
@@ -133,7 +133,7 @@
 
 1301111158 c:\program files (x86)\codeblocks\mingw\include\rpcnterr.h
 
-1341006772 c:\program files (x86)\codeblocks\mingw\include\excpt.h
+1341003172 c:\program files (x86)\codeblocks\mingw\include\excpt.h
 	<_mingw.h>
 	<windef.h>
 
@@ -195,7 +195,7 @@
 	<objidl.h>
 	<cguid.h>
 
-1341006776 c:\program files (x86)\codeblocks\mingw\include\stdlib.h
+1341003176 c:\program files (x86)\codeblocks\mingw\include\stdlib.h
 	<_mingw.h>
 	<stddef.h>
 
@@ -216,7 +216,7 @@
 1301111156 c:\program files (x86)\codeblocks\mingw\include\oleidl.h
 	<objfwd.h>
 
-1505751768 c:\program files (x86)\codeblocks\mingw\include\gl\glut.h
+1505748166 c:\program files (x86)\codeblocks\mingw\include\gl\glut.h
 	<windows.h>
 	<GL/gl.h>
 	<GL/glu.h>
@@ -227,17 +227,17 @@
 	<stddef.h>
 	<GL/gl.h>
 
-1341006776 c:\program files (x86)\codeblocks\mingw\include\stdio.h
+1341003176 c:\program files (x86)\codeblocks\mingw\include\stdio.h
 	<_mingw.h>
 	<stddef.h>
 	<stdarg.h>
 	<sys/types.h>
 
-1341006780 c:\program files (x86)\codeblocks\mingw\include\sys\types.h
+1341003180 c:\program files (x86)\codeblocks\mingw\include\sys\types.h
 	<_mingw.h>
 	<stddef.h>
 
-1341006774 c:\program files (x86)\codeblocks\mingw\include\math.h
+1341003174 c:\program files (x86)\codeblocks\mingw\include\math.h
 	<_mingw.h>
 
 1511345369 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\vec3.h
@@ -281,4 +281,55 @@
 	"Voxel.h"
 
 1512934122 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\forms\voxel.h
+
+1513930809 source:d:\documents_edwyn\modelisation\modelisationvoxel\forms\volumeform.cpp
+	"VolumeForm.h"
+	"CubeVolume.h"
+
+1513938218 d:\documents_edwyn\modelisation\modelisationvoxel\forms\volumeform.h
+	<deque>
+	"../vec3.h"
+
+1513930809 d:\documents_edwyn\modelisation\modelisationvoxel\vec3.h
+	<string>
+
+1513938232 d:\documents_edwyn\modelisation\modelisationvoxel\forms\cubevolume.h
+	<deque>
+	"VolumeForm.h"
+
+1513930809 source:d:\documents_edwyn\modelisation\modelisationvoxel\main.cpp
+	<windows.h>
+	<GL/glut.h>
+	<GL/glu.h>
+	<stdio.h>
+	<math.h>
+	<stdlib.h>
+	<deque>
+	"vec3.h"
+	"utils.h"
+	"CubeVolume.h"
+	"SphereVolume.h"
+
+1513930809 d:\documents_edwyn\modelisation\modelisationvoxel\utils.h
+	<string>
+	<sstream>
+	<iostream>
+
+1513938227 d:\documents_edwyn\modelisation\modelisationvoxel\forms\spherevolume.h
+	"VolumeForm.h"
+
+1513930809 source:d:\documents_edwyn\modelisation\modelisationvoxel\utils.cpp
+	"utils.h"
+
+1513930809 source:d:\documents_edwyn\modelisation\modelisationvoxel\vec3.cpp
+	"vec3.h"
+	"math.h"
+	"utils.h"
+
+1513937133 source:d:\documents_edwyn\modelisation\modelisationvoxel\forms\cubevolume.cpp
+	"CubeVolume.h"
+
+1513937197 source:d:\documents_edwyn\modelisation\modelisationvoxel\forms\spherevolume.cpp
+	"SphereVolume.h"
+	"CubeVolume.h"
 
