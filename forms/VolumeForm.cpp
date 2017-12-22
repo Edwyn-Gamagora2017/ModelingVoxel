@@ -11,6 +11,10 @@ VolumeForm::~VolumeForm()
     //dtor
 }
 
+vec3 VolumeForm::getCenter(){
+    return this->center;
+}
+
 std::deque<vec3> VolumeForm::voxelVeticesInside( Voxel voxel ){
     std::deque<vec3> result;
     for( vec3 vertex : voxel.getVertices() ){

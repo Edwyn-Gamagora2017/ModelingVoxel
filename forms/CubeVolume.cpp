@@ -13,6 +13,10 @@ CubeVolume::~CubeVolume()
     //dtor
 }
 
+float CubeVolume::getWidth(){ return this->width; }
+float CubeVolume::getHeight(){ return this->height; }
+float CubeVolume::getDepth(){ return this->depth; }
+
 std::deque<vec3> CubeVolume::getVertices(){
     std::deque<vec3> result;
     // Front

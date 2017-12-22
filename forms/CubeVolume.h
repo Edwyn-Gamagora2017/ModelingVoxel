@@ -19,6 +19,10 @@ class CubeVolume :
         /** Default destructor */
         virtual ~CubeVolume();
 
+        float getWidth();
+        float getHeight();
+        float getDepth();
+
         std::deque<vec3> getVertices();
 
         bool pointInside( vec3 point );

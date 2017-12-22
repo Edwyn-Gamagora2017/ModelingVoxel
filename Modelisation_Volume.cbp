@@ -57,8 +57,8 @@
 		<Unit filename="forms/SphereVolume.h" />
 		<Unit filename="forms/VolumeForm.cpp" />
 		<Unit filename="forms/VolumeForm.h" />
-		<Unit filename="forms/structure/FromTree.cpp" />
-		<Unit filename="forms/structure/FromTree.h" />
+		<Unit filename="forms/structure/FormTree.cpp" />
+		<Unit filename="forms/structure/FormTree.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="utils.cpp" />
 		<Unit filename="utils.h" />

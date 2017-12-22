@@ -19,6 +19,8 @@ class VolumeForm
         /** Default destructor */
         virtual ~VolumeForm();
 
+        vec3 getCenter();
+
         /** \brief given a voxel, verifies which vertices are inside the form
          *
          * \param voxel Voxel - the voxel to be evaluated
@@ -43,7 +45,7 @@ class VolumeForm
          */
         virtual bool pointInside( vec3 point ) = 0;
 
-        /** \brief obtains the box that encloses the form
+        /** \brief obtains the box that encloses the form (implemented by each form)
          *
          * \return virtual CubeVolume - the box that encloses the form
          *

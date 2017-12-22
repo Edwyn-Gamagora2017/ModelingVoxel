@@ -1,6 +1,8 @@
 #ifndef FORMTREE_H
 #define FORMTREE_H
 
+#include "../CubeVolume.h"
+#define Voxel CubeVolume
 
 class FormTree
 {
@@ -32,6 +34,13 @@ class FormTree
          *
          */
         bool isCenterInsideVoxel( Voxel voxel );
+
+        /** \brief obtains the box that encloses the tree
+         *
+         * \return virtual CubeVolume - the box that encloses the tree
+         *
+         */
+        CubeVolume getBoundingBox();
 
     protected:
 

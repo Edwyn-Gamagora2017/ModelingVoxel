@@ -22,6 +22,7 @@
 
 #include "CubeVolume.h"
 #include "SphereVolume.h"
+#include "FormTree.h"
 
 #define Voxel CubeVolume
 
@@ -36,12 +37,13 @@ float tx=0.0;
 float ty=0.0;
 
 // Parameters
-bool drawVoxelEdges = true;
+bool drawVoxelEdges = false;
 bool considerLight = true;
 vec3 lightPosition(5,0,-5);
 
 SphereVolume * s, * s2;
 CubeVolume * c;
+FormTree * tree;
 
 vec3 white( 1,1,1 );
 vec3 red( 1,0,0 );
@@ -56,6 +58,9 @@ static void init(void)
 	s = new SphereVolume( vec3( 0,0,0 ), 2. );
 	s2 = new SphereVolume( vec3( 0,2,0 ), 1. );
 	c = new CubeVolume( vec3( 2,0,0 ), 1, 1, 1 );
+
+	tree = new FormTree( FormTree::Intersection, new FormTree(s), new FormTree(s2) );
+std::cout << "inti" << std::endl;
 }
 
 void drawSquare( vec3 p1, vec3 p2, vec3 p3, vec3 p4, vec3 color, GLenum mode, bool considerLight, vec3 lightPosition ){
@@ -116,7 +121,28 @@ void drawVolumeForm( VolumeForm * form, vec3 color, GLenum mode, bool drawVoxelE
                 }
                 else{
                     if( drawVoxelEdges ){
-                        //drawVoxel( v, white, GL_LINE_LOOP, false, lightPosition );
+                        drawVoxel( v, white, GL_LINE_LOOP, false, lightPosition );
+                    }
+                }
+            }
+        }
+    }
+}
+
+void drawFormTree( FormTree * formTree, vec3 color, GLenum mode, bool drawVoxelEdges, bool considerLight, vec3 lightPosition ){
+    CubeVolume box = formTree->getBoundingBox();
+    float voxelDimension = 0.5f;
+std::cout << "bounding" << std::endl;
+    FOR( w, box.getWidth()/voxelDimension ){
+        FOR( h, box.getHeight()/voxelDimension ){
+            FOR( d, box.getDepth()/voxelDimension ){
+                Voxel v( vec3( w*voxelDimension+voxelDimension/2.-box.getWidth()/2., h*voxelDimension+voxelDimension/2.-box.getHeight()/2., d*voxelDimension+voxelDimension/2.-box.getDepth()/2. ), voxelDimension, voxelDimension, voxelDimension );
+                if( tree->voxelVeticesInside( v ) || tree->isCenterInsideVoxel( v ) ){
+                    drawVoxel( v, color, mode, considerLight, lightPosition );
+                }
+                else{
+                    if( drawVoxelEdges ){
+                        drawVoxel( v, white, GL_LINE_LOOP, false, lightPosition );
                     }
                 }
             }
@@ -132,9 +158,12 @@ void display(void)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
+	/*
 	drawVolumeForm( s, white, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
 	drawVolumeForm( s2, red, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
 	drawVolumeForm( c, green, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
+	*/
+	drawFormTree( tree, white, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
 
 	glFlush();
 }
