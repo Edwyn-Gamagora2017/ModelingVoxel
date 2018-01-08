@@ -22,6 +22,7 @@
 
 #include "CubeVolume.h"
 #include "SphereVolume.h"
+#include "CylinderVolume.h"
 #include "FormTree.h"
 
 #define Voxel CubeVolume
@@ -46,6 +47,7 @@ vec3 lightPosition(5,0,-5);
 std::deque<FormTree*> form_list;
 SphereVolume * s, * s2, * s3;
 CubeVolume * c, * c2, * c3;
+CylinderVolume * cy;
 
 vec3 white( 1,1,1 );
 vec3 red( 1,0,0 );
@@ -63,6 +65,8 @@ static void init(void)
 
 	s2 = new SphereVolume( vec3( -2,0,0 ), 1. );
 	c3 = new CubeVolume( vec3( -3,0,0 ), 2, 2, 2 );
+
+	cy = new CylinderVolume( vec3( 3,0,0 ), 1, 1 );
 
     form_list.push_back( new FormTree(
                         FormTree::Union,
@@ -82,6 +86,8 @@ static void init(void)
                                 )
                             )
                         );
+
+    form_list.push_back( new FormTree( cy ) );
 }
 
 void drawSquare( vec3 p1, vec3 p2, vec3 p3, vec3 p4, vec3 color, GLenum mode, bool considerLight, vec3 lightPosition ){
@@ -121,13 +127,12 @@ void drawVoxel( Voxel voxel, vec3 color, GLenum mode, bool considerLight, vec3 l
 
 	// Left
 	drawSquare( points[4], points[0], points[3], points[7], color, mode, considerLight, lightPosition );
-	//*// Right
+	// Right
 	drawSquare( points[1], points[5], points[6], points[2], color, mode, considerLight, lightPosition );
 	// Top
 	drawSquare( points[4], points[5], points[1], points[0], color, mode, considerLight, lightPosition );
 	// Bottom
 	drawSquare( points[3], points[2], points[6], points[7], color, mode, considerLight, lightPosition );
-//*/
 }
 
 void drawVolumeForm( VolumeForm * form, float voxelDimension, vec3 color, GLenum mode, bool drawVoxelEdges, bool considerLight, vec3 lightPosition ){
