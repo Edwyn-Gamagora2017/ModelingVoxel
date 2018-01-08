@@ -231,12 +231,12 @@ void Figure::removeFace( int index ){
 
 void Figure::generatePointsAndFaces(){}
 
-std::deque<vec3> Figure::voxelVeticesInside( Voxel voxel ){
-    std::deque<vec3> result;
+std::deque<Point3d *> Figure::voxelVeticesInsideFigure( Voxel voxel ){
+    std::deque<Point3d *> result;
     // check if there is at least one vertex inside the voxel
     for(int i=0; i<this->points.size(); i++){
         if( voxel.pointInside( this->points[i]->toVector() ) ){
-            result.push_back( this->points[i]->toVector() );
+            result.push_back( this->points[i] );
         }
     }
     return result;

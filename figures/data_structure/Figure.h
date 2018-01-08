@@ -50,7 +50,7 @@ public:
     /*
     Volume
     */
-    std::deque<vec3> voxelVeticesInside( Voxel voxel ) override;
+    std::deque<Point3d*> voxelVeticesInsideFigure( Voxel voxel );
     bool pointInside( vec3 point );
     CubeVolume getBoundingBox();
 

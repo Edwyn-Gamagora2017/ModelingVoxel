@@ -67,7 +67,7 @@ struct spaceVoxel{
     public :
     Voxel * voxel;
     int value;
-    std::deque< vec3 > vertices;
+    std::deque< Point3d * > vertices;
 };
 
 spaceVoxel *** space;
@@ -75,6 +75,7 @@ int spaceW, spaceH, spaceD;
 
 void fillSpace( FormTree * formTree, float voxelDimension );
 void fillSpaceWithFigure( Figure * figure, float voxelDimension );
+Figure * Simplification( Figure * figure, spaceVoxel*** spaceMatrix );
 
 /* initialisation d'OpenGL*/
 static void init(void)
@@ -112,8 +113,6 @@ static void init(void)
 
     FormTree * t3 = new FormTree( cy );
 
-    FormTree * t_figure = new FormTree( f );
-
     if( !showSimplification ){
         tree = new FormTree(
                     FormTree::Union,
@@ -126,9 +125,12 @@ static void init(void)
                     );
         fillSpace( tree, voxel_dimension );
     }else{
-        tree = t_figure;
         voxel_dimension = 1.5;
         fillSpaceWithFigure( f, voxel_dimension );
+
+        f = Simplification( f, space );
+        tree = new FormTree( f );;
+        fillSpace( tree, voxel_dimension );
     }
 }
 
@@ -258,7 +260,7 @@ void fillSpaceWithFigure( Figure * figure, float voxelDimension ){
                         voxelDimension, voxelDimension, voxelDimension );
 
                 space[w][h][d].voxel = v;
-                std::deque<vec3> vertices = figure->voxelVeticesInside( *v );
+                std::deque<Point3d *> vertices = figure->voxelVeticesInsideFigure( *v );
                 if( vertices.size() > 0 ){//|| figure->isCenterInsideVoxel( *v ) ){
                     space[w][h][d].value = 1;
                     space[w][h][d].vertices = vertices;
@@ -299,7 +301,7 @@ Figure * Simplification( Figure * figure, spaceVoxel*** spaceMatrix )
 {
     std::deque<Point3d*> newPoints;
     std::deque<int> origPointsCenters( figure->getPoints().size() );
-	std::deque<FigureFace*> faces;
+	std::deque<FigureFace*> newFaces;
 
     // For each voxel, choose the center
     FOR( w, spaceW ){
@@ -307,9 +309,9 @@ Figure * Simplification( Figure * figure, spaceVoxel*** spaceMatrix )
             FOR( d, spaceD ){
                 if( spaceMatrix[w][h][d].value > 0 && spaceMatrix[w][h][d].vertices.size() > 0){
                     // Calculate average
-                    vec3 center = spaceMatrix[w][h][d].vertices[0];
+                    vec3 center = spaceMatrix[w][h][d].vertices[0]->toVector();
                     for( int i=1; i<spaceMatrix[w][h][d].vertices.size(); i++ ){
-                        center.addition( spaceMatrix[w][h][d].vertices[i] );
+                        center.addition( spaceMatrix[w][h][d].vertices[i]->toVector() );
                     }
                     center = center.division( spaceMatrix[w][h][d].vertices.size() );
                     int newPointIndex = newPoints.size();
@@ -317,20 +319,46 @@ Figure * Simplification( Figure * figure, spaceVoxel*** spaceMatrix )
 
                     // Storing center for each original point
                     for( int i=1; i<spaceMatrix[w][h][d].vertices.size(); i++ ){
-                        origPointsCenters[ i ] = newPointIndex;
+                        origPointsCenters[ spaceMatrix[w][h][d].vertices[i]->getIndex() ] = newPointIndex;
                     }
-
-                    // For each face, set new points
                 }
             }
         }
     }
 
-    /*Figure * resultat = new Figure( new vec3(0,0,0), new vec3(1,1,1), new vec3(0,0,0), new Point3d(1,1,1,-1), false, false );
-	resultat->setPoints( points );
-	resultat->setFaces( faces );
+    // For each face, set new points
+    FOR( i, figure->getFaces().size() ){
+        std::deque<Point3d *> pointsFace = figure->getFaces()[i]->getPoints();
+        std::deque<int> pointsFaceCenter;
+        std::deque<Point3d *> newPointsFace;
 
-	resultat->centralizeFigure();*/
+        bool includeFace = true;
+        FOR( j, pointsFace.size() ){
+            int centerIndex = origPointsCenters[ pointsFace[ j ]->getIndex() ];
+            newPointsFace.push_back( newPoints[ centerIndex ] );
+            pointsFaceCenter.push_back( centerIndex );
+
+            // Check if some other original point has the same center
+            FOR( k, pointsFaceCenter.size()-1 ){
+                if( pointsFaceCenter[k] == centerIndex ){
+                    // not include face
+                    includeFace = false;
+                    break;
+                }
+            }
+        }
+        if( includeFace ){
+            vec3 normal = newPointsFace[1]->toVector().soustraction( newPointsFace[0]->toVector() ).produitVectoriel( newPointsFace[2]->toVector().soustraction( newPointsFace[0]->toVector() ) );
+            newFaces.push_back( new FigureFace( newPointsFace, normal, newFaces.size() ) );
+        }
+    }
+
+    Figure * result = new Figure( new vec3(0,0,0), new vec3(1,1,1), new vec3(0,0,0), new Point3d(1,1,1,-1), false, false );
+	result->setPoints( newPoints );
+	result->setFaces( newFaces );
+
+	result->centralizeFigure();
+	return result;
 }
 
 void DrawAxes();
