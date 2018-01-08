@@ -39,20 +39,32 @@
 float angleX=0.0f; //angle de rotation en Y de la scene
 float angleY=0.0f; //angle de rotation en X de la scene
 
-// Parameters
-bool drawVoxelEdges = false;
-bool considerLight = true;
-vec3 lightPosition(5,0,-5);
-
-std::deque<FormTree*> form_list;
-SphereVolume * s, * s2, * s3;
-CubeVolume * c, * c2, * c3;
-CylinderVolume * cy;
-
 vec3 white( 1,1,1 );
 vec3 red( 1,0,0 );
 vec3 green( 0,1,0 );
 vec3 blue( 0,0,1 );
+
+// Parameters
+bool drawVoxelEdges = false;
+bool considerLight = true;
+vec3 lightPosition(5,0,-5);
+float voxel_dimension = 0.2;
+
+FormTree * tree;
+SphereVolume * s, * s2, * s3;
+CubeVolume * c, * c2, * c3;
+CylinderVolume * cy;
+
+struct spaceVoxel{
+    public :
+    Voxel * voxel;
+    int value;
+};
+
+spaceVoxel *** space;
+int spaceW, spaceH, spaceD;
+
+void fillSpace( FormTree * formTree, float voxelDimension );
 
 /* initialisation d'OpenGL*/
 static void init(void)
@@ -68,7 +80,7 @@ static void init(void)
 
 	cy = new CylinderVolume( vec3( 3,0,0 ), 1, 1 );
 
-    form_list.push_back( new FormTree(
+    FormTree * t1 = new FormTree(
                         FormTree::Union,
                         new FormTree( c ),
                         new FormTree(
@@ -76,18 +88,28 @@ static void init(void)
                             new FormTree(c2),
                             new FormTree(s)
                             )
-                        )
-                    );
-    form_list.push_back( new FormTree(
+                        );
+    FormTree * t2 = new FormTree(
                             FormTree::Difference,
                             new FormTree( c3 ),
                             new FormTree(
                                 s2
                                 )
-                            )
-                        );
+                            );
 
-    form_list.push_back( new FormTree( cy ) );
+    FormTree * t3 = new FormTree( cy );
+
+    tree = new FormTree(
+                FormTree::Union,
+                t1,
+                new FormTree(
+                    FormTree::Union,
+                    t2,
+                    t3
+                    )
+                );
+
+    fillSpace( tree, voxel_dimension );
 }
 
 void drawSquare( vec3 p1, vec3 p2, vec3 p3, vec3 p4, vec3 color, GLenum mode, bool considerLight, vec3 lightPosition ){
@@ -155,29 +177,55 @@ void drawVolumeForm( VolumeForm * form, float voxelDimension, vec3 color, GLenum
     }
 }
 
-void drawFormTree( FormTree * formTree, float voxelDimension, vec3 color, GLenum mode, bool drawVoxelEdges, bool considerLight, vec3 lightPosition ){
+void fillSpace( FormTree * formTree, float voxelDimension ){
+    CubeVolume box = formTree->getBoundingBox();
+    float boxCenterX = box.getCenter().getX();
+    float boxCenterY = box.getCenter().getY();
+    float boxCenterZ = box.getCenter().getZ();
+
+    // Matrix to store values
+    spaceW = ceil(box.getWidth()/voxel_dimension)+1;
+    spaceH = ceil(box.getHeight()/voxel_dimension)+1;
+    spaceD = ceil(box.getDepth()/voxel_dimension)+1;
+
+    // Calculating Voxels
+    space = new spaceVoxel**[ spaceW ];
+    FOR( w, spaceW ){
+        space[w] = new spaceVoxel*[ spaceH ];
+        FOR( h, spaceH){
+            space[w][h] = new spaceVoxel[ spaceD ];
+            FOR( d, spaceD ){
+
+                Voxel * v = new Voxel( vec3( boxCenterX-box.getWidth()/2. + (w+0.5)*voxelDimension,
+                              boxCenterY-box.getHeight()/2. + (h+0.5)*voxelDimension,
+                              boxCenterZ-box.getDepth()/2. + (d+0.5)*voxelDimension ),
+                        voxelDimension, voxelDimension, voxelDimension );
+
+                space[w][h][d].voxel = v;
+                if( formTree->voxelVeticesInside( *v ) || formTree->isCenterInsideVoxel( *v ) ){
+                    space[w][h][d].value = 1;
+                }
+                else{
+                    space[w][h][d].value = 0;
+                }
+            }
+        }
+    }
+}
+
+void drawSpace( FormTree * formTree, spaceVoxel*** spaceMatrix, float voxelDimension, vec3 color, GLenum mode, bool drawVoxelEdges, bool considerLight, vec3 lightPosition ){
     CubeVolume box = formTree->getBoundingBox();
 //drawVolumeForm( &box, voxelDimension, red, GL_LINE_LOOP, drawVoxelEdges, considerLight, lightPosition );
     float boxCenterX = box.getCenter().getX();
     float boxCenterY = box.getCenter().getY();
     float boxCenterZ = box.getCenter().getZ();
 
-    FOR( w, ceil(box.getWidth()/voxelDimension)+1 ){
-        FOR( h, ceil(box.getHeight()/voxelDimension)+1 ){
-            FOR( d, ceil(box.getDepth()/voxelDimension)+1 ){
+    FOR( w, spaceW ){
+        FOR( h, spaceH){
+            FOR( d, spaceD ){
 
-                Voxel v( vec3( boxCenterX-box.getWidth()/2. + (w+0.5)*voxelDimension,
-                              boxCenterY-box.getHeight()/2. + (h+0.5)*voxelDimension,
-                              boxCenterZ-box.getDepth()/2. + (d+0.5)*voxelDimension ),
-                        voxelDimension, voxelDimension, voxelDimension );
-
-                if( formTree->voxelVeticesInside( v ) || formTree->isCenterInsideVoxel( v ) ){
-                    drawVoxel( v, color, mode, considerLight, lightPosition );
-                }
-                else{
-                    if( drawVoxelEdges ){
-                        drawVoxel( v, white, GL_LINE_LOOP, false, lightPosition );
-                    }
+                if( spaceMatrix[w][h][d].value > 0){
+                    drawVoxel( *(spaceMatrix[w][h][d].voxel), color, mode, considerLight, lightPosition );
                 }
             }
         }
@@ -202,9 +250,7 @@ void display(void)
 	drawVolumeForm( s2, red, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
 	drawVolumeForm( c, green, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
 	*/
-	FOR(i, form_list.size()){
-        drawFormTree( form_list[i], 0.2, white, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
-	}
+    drawSpace( tree, space, voxel_dimension, white, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
 
 	DrawAxes();
 	glutSwapBuffers();// echange des buffers

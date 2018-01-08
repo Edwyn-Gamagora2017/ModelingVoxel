@@ -53,6 +53,8 @@
 		</Linker>
 		<Unit filename="forms/CubeVolume.cpp" />
 		<Unit filename="forms/CubeVolume.h" />
+		<Unit filename="forms/CylinderVolume.cpp" />
+		<Unit filename="forms/CylinderVolume.h" />
 		<Unit filename="forms/SphereVolume.cpp" />
 		<Unit filename="forms/SphereVolume.h" />
 		<Unit filename="forms/VolumeForm.cpp" />
