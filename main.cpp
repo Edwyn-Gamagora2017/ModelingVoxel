@@ -17,13 +17,18 @@
 #include <math.h>
 #include <stdlib.h>
 #include <deque>
-#include "vec3.h"
-#include "utils.h"
+#include "figures/data_structure/vec3.h"
+#include "utils/utils.h"
 
 #include "CubeVolume.h"
 #include "SphereVolume.h"
 #include "CylinderVolume.h"
 #include "FormTree.h"
+
+#include "figures/data_structure/Point3d.h"
+#include "figures/data_structure/Figure.h"
+#include "utils/utils.h"
+#include "utils/OffFile.h"
 
 #define Voxel CubeVolume
 
@@ -49,22 +54,27 @@ bool drawVoxelEdges = false;
 bool considerLight = true;
 vec3 lightPosition(5,0,-5);
 float voxel_dimension = 0.2;
+// Parameters Mesh
+bool showSimplification = true;
 
 FormTree * tree;
 SphereVolume * s, * s2, * s3;
 CubeVolume * c, * c2, * c3;
 CylinderVolume * cy;
+Figure * f;
 
 struct spaceVoxel{
     public :
     Voxel * voxel;
     int value;
+    std::deque< vec3 > vertices;
 };
 
 spaceVoxel *** space;
 int spaceW, spaceH, spaceD;
 
 void fillSpace( FormTree * formTree, float voxelDimension );
+void fillSpaceWithFigure( Figure * figure, float voxelDimension );
 
 /* initialisation d'OpenGL*/
 static void init(void)
@@ -79,6 +89,9 @@ static void init(void)
 	c3 = new CubeVolume( vec3( -3,0,0 ), 2, 2, 2 );
 
 	cy = new CylinderVolume( vec3( 3,0,0 ), 1, 1 );
+
+	// Mesh
+    f    = OffFile::readFile( "maillages/triceratops" );
 
     FormTree * t1 = new FormTree(
                         FormTree::Union,
@@ -99,17 +112,24 @@ static void init(void)
 
     FormTree * t3 = new FormTree( cy );
 
-    tree = new FormTree(
-                FormTree::Union,
-                t1,
-                new FormTree(
-                    FormTree::Union,
-                    t2,
-                    t3
-                    )
-                );
+    FormTree * t_figure = new FormTree( f );
 
-    fillSpace( tree, voxel_dimension );
+    if( !showSimplification ){
+        tree = new FormTree(
+                    FormTree::Union,
+                    t1,
+                    new FormTree(
+                        FormTree::Union,
+                        t2,
+                        t3
+                        )
+                    );
+        fillSpace( tree, voxel_dimension );
+    }else{
+        tree = t_figure;
+        voxel_dimension = 1.5;
+        fillSpaceWithFigure( f, voxel_dimension );
+    }
 }
 
 void drawSquare( vec3 p1, vec3 p2, vec3 p3, vec3 p4, vec3 color, GLenum mode, bool considerLight, vec3 lightPosition ){
@@ -213,6 +233,44 @@ void fillSpace( FormTree * formTree, float voxelDimension ){
     }
 }
 
+void fillSpaceWithFigure( Figure * figure, float voxelDimension ){
+    CubeVolume box = figure->getBoundingBox();
+    float boxCenterX = box.getCenter().getX();
+    float boxCenterY = box.getCenter().getY();
+    float boxCenterZ = box.getCenter().getZ();
+
+    // Matrix to store values
+    spaceW = ceil(box.getWidth()/voxel_dimension)+1;
+    spaceH = ceil(box.getHeight()/voxel_dimension)+1;
+    spaceD = ceil(box.getDepth()/voxel_dimension)+1;
+
+    // Calculating Voxels
+    space = new spaceVoxel**[ spaceW ];
+    FOR( w, spaceW ){
+        space[w] = new spaceVoxel*[ spaceH ];
+        FOR( h, spaceH){
+            space[w][h] = new spaceVoxel[ spaceD ];
+            FOR( d, spaceD ){
+
+                Voxel * v = new Voxel( vec3( boxCenterX-box.getWidth()/2. + (w+0.5)*voxelDimension,
+                              boxCenterY-box.getHeight()/2. + (h+0.5)*voxelDimension,
+                              boxCenterZ-box.getDepth()/2. + (d+0.5)*voxelDimension ),
+                        voxelDimension, voxelDimension, voxelDimension );
+
+                space[w][h][d].voxel = v;
+                std::deque<vec3> vertices = figure->voxelVeticesInside( *v );
+                if( vertices.size() > 0 ){//|| figure->isCenterInsideVoxel( *v ) ){
+                    space[w][h][d].value = 1;
+                    space[w][h][d].vertices = vertices;
+                }
+                else{
+                    space[w][h][d].value = 0;
+                }
+            }
+        }
+    }
+}
+
 void drawSpace( FormTree * formTree, spaceVoxel*** spaceMatrix, float voxelDimension, vec3 color, GLenum mode, bool drawVoxelEdges, bool considerLight, vec3 lightPosition ){
     CubeVolume box = formTree->getBoundingBox();
 //drawVolumeForm( &box, voxelDimension, red, GL_LINE_LOOP, drawVoxelEdges, considerLight, lightPosition );
@@ -227,9 +285,52 @@ void drawSpace( FormTree * formTree, spaceVoxel*** spaceMatrix, float voxelDimen
                 if( spaceMatrix[w][h][d].value > 0){
                     drawVoxel( *(spaceMatrix[w][h][d].voxel), color, mode, considerLight, lightPosition );
                 }
+                else{
+                    if( drawVoxelEdges ){
+                        drawVoxel( *(spaceMatrix[w][h][d].voxel), color, GL_LINE_LOOP, false, lightPosition );
+                    }
+                }
             }
         }
     }
+}
+
+Figure * Simplification( Figure * figure, spaceVoxel*** spaceMatrix )
+{
+    std::deque<Point3d*> newPoints;
+    std::deque<int> origPointsCenters( figure->getPoints().size() );
+	std::deque<FigureFace*> faces;
+
+    // For each voxel, choose the center
+    FOR( w, spaceW ){
+        FOR( h, spaceH){
+            FOR( d, spaceD ){
+                if( spaceMatrix[w][h][d].value > 0 && spaceMatrix[w][h][d].vertices.size() > 0){
+                    // Calculate average
+                    vec3 center = spaceMatrix[w][h][d].vertices[0];
+                    for( int i=1; i<spaceMatrix[w][h][d].vertices.size(); i++ ){
+                        center.addition( spaceMatrix[w][h][d].vertices[i] );
+                    }
+                    center = center.division( spaceMatrix[w][h][d].vertices.size() );
+                    int newPointIndex = newPoints.size();
+                    newPoints.push_back( new Point3d( center.getX(), center.getY(), center.getZ(), newPointIndex ) );
+
+                    // Storing center for each original point
+                    for( int i=1; i<spaceMatrix[w][h][d].vertices.size(); i++ ){
+                        origPointsCenters[ i ] = newPointIndex;
+                    }
+
+                    // For each face, set new points
+                }
+            }
+        }
+    }
+
+    /*Figure * resultat = new Figure( new vec3(0,0,0), new vec3(1,1,1), new vec3(0,0,0), new Point3d(1,1,1,-1), false, false );
+	resultat->setPoints( points );
+	resultat->setFaces( faces );
+
+	resultat->centralizeFigure();*/
 }
 
 void DrawAxes();
@@ -283,7 +384,7 @@ void reshape(int w, int h)
    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   glOrtho(-5, 5, -5, 5, -5, 5);
+   glOrtho(-6, 6, -6, 6, -6, 6);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
 }
@@ -293,6 +394,12 @@ void keyboard(unsigned char key, int x, int y)
    switch (key) {
     case '0': case '1': case '2': case '3':
         //selectedControlPoint = key - '0';
+        break;
+    case 'g': case 'G':
+        drawVoxelEdges = !drawVoxelEdges;
+        break;
+    case 's': case 'S':
+        showSimplification = !showSimplification;
         break;
 
    case ESC:

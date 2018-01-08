@@ -3,7 +3,7 @@
 
 #include <deque>
 
-#include "../vec3.h"
+#include "../figures/data_structure/vec3.h"
 class CubeVolume;
 
 #define Voxel CubeVolume
@@ -27,7 +27,7 @@ class VolumeForm
          * \return std::deque<vec3> - vertices that are inside the form
          *
          */
-        std::deque<vec3> voxelVeticesInside( Voxel voxel );
+        virtual std::deque<vec3> voxelVeticesInside( Voxel voxel );
 
         /** \brief given a voxel, checks if the center of the form is inside de voxel (this way, it is useful to check if the form is inside the voxel)
          *

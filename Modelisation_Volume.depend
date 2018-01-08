@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1515420218 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\main.cpp
+1515428294 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\main.cpp
 	<windows.h>
 	<GL/glut.h>
 	<GL/glu.h>
@@ -7,12 +7,16 @@
 	<math.h>
 	<stdlib.h>
 	<deque>
-	"vec3.h"
-	"utils.h"
+	"figures/data_structure/vec3.h"
+	"utils/utils.h"
 	"CubeVolume.h"
 	"SphereVolume.h"
 	"CylinderVolume.h"
 	"FormTree.h"
+	"figures/data_structure/Point3d.h"
+	"figures/data_structure/Figure.h"
+	"utils/utils.h"
+	"utils/OffFile.h"
 
 1301111162 c:\program files (x86)\codeblocks\mingw\include\windows.h
 	<winresrc.h>
@@ -262,9 +266,9 @@
 	"VolumeForm.h"
 	"CubeVolume.h"
 
-1515404161 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\forms\volumeform.h
+1515427003 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\forms\volumeform.h
 	<deque>
-	"../vec3.h"
+	"../figures/data_structure/vec3.h"
 
 1515404161 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\forms\cubevolume.cpp
 	"CubeVolume.h"
@@ -363,4 +367,74 @@
 
 1515418716 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\forms\cylindervolume.h
 	"VolumeForm.h"
+
+1511287960 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\figures\data_structure\edge.cpp
+	"Edge.h"
+
+1511286807 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\figures\data_structure\edge.h
+	"Point3d.h"
+	"FigureFace.h"
+	<deque>
+
+1511286771 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\figures\data_structure\point3d.h
+	"vec3.h"
+	"Edge.h"
+	<deque>
+	<string>
+
+1511207128 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\figures\data_structure\vec3.h
+	<string>
+
+1511287479 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\figures\data_structure\figureface.h
+	<deque>
+	"Point3d.h"
+
+1515427123 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\figures\data_structure\figure.cpp
+	"Figure.h"
+	<iostream>
+	"CubeVolume.h"
+
+1515428027 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\figures\data_structure\figure.h
+	"vec3.h"
+	"Point3d.h"
+	"Edge.h"
+	"FigureFace.h"
+	<deque>
+	"VolumeForm.h"
+
+1511289070 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\figures\data_structure\figureface.cpp
+	"FigureFace.h"
+	<math.h>
+	<iostream>
+
+1511207128 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\figures\data_structure\vec3.cpp
+	"vec3.h"
+	"math.h"
+	"../../utils/utils.h"
+
+1511207128 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\utils\utils.h
+	<string>
+	<sstream>
+	<iostream>
+
+1511207128 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\utils\offfile.h
+	"../figures/data_structure/Figure.h"
+	<string>
+
+1515428056 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\utils\offfile.cpp
+	"OffFile.h"
+	<iostream>
+	<fstream>
+	<deque>
+	<climits>
+	"utils.h"
+	"../figures/data_structure/vec3.h"
+	"../figures/data_structure/FigureFace.h"
+
+1511207128 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\utils\utils.cpp
+	"utils.h"
+
+1511288057 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\figures\data_structure\point3d.cpp
+	"Point3d.h"
+	"../../utils/utils.h"
 

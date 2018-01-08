@@ -1,6 +1,6 @@
 #include "vec3.h"
 #include "math.h"
-#include "utils.h"
+#include "../../utils/utils.h"
 using namespace std;
 
 vec3::vec3(double x, double y, double z) {
