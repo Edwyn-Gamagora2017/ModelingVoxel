@@ -33,17 +33,19 @@
 
 #define ESC 27
 
-float tx=0.0;
-float ty=0.0;
+#define WIDTH  600
+#define HEIGHT 600
+float angleX=0.0f; //angle de rotation en Y de la scene
+float angleY=0.0f; //angle de rotation en X de la scene
 
 // Parameters
 bool drawVoxelEdges = false;
 bool considerLight = true;
 vec3 lightPosition(5,0,-5);
 
-SphereVolume * s, * s2;
-CubeVolume * c;
-FormTree * tree;
+std::deque<FormTree*> form_list;
+SphereVolume * s, * s2, * s3;
+CubeVolume * c, * c2, * c3;
 
 vec3 white( 1,1,1 );
 vec3 red( 1,0,0 );
@@ -55,12 +57,31 @@ static void init(void)
 {
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 
-	s = new SphereVolume( vec3( 0,0,0 ), 2. );
-	s2 = new SphereVolume( vec3( 0,2,0 ), 1. );
-	c = new CubeVolume( vec3( 2,0,0 ), 1, 1, 1 );
+	s = new SphereVolume( vec3( 0,1.,0 ), 1. );
+	c = new CubeVolume( vec3( 0,-0.5,0 ), 1, 1, 1 );
+	c2 = new CubeVolume( vec3( 0,0,0 ), 2, 2, 2 );
 
-	tree = new FormTree( FormTree::Intersection, new FormTree(s), new FormTree(s2) );
-std::cout << "inti" << std::endl;
+	s2 = new SphereVolume( vec3( -2,0,0 ), 1. );
+	c3 = new CubeVolume( vec3( -3,0,0 ), 2, 2, 2 );
+
+    form_list.push_back( new FormTree(
+                        FormTree::Union,
+                        new FormTree( c ),
+                        new FormTree(
+                            FormTree::Intersection,
+                            new FormTree(c2),
+                            new FormTree(s)
+                            )
+                        )
+                    );
+    form_list.push_back( new FormTree(
+                            FormTree::Difference,
+                            new FormTree( c3 ),
+                            new FormTree(
+                                s2
+                                )
+                            )
+                        );
 }
 
 void drawSquare( vec3 p1, vec3 p2, vec3 p3, vec3 p4, vec3 color, GLenum mode, bool considerLight, vec3 lightPosition ){
@@ -100,18 +121,18 @@ void drawVoxel( Voxel voxel, vec3 color, GLenum mode, bool considerLight, vec3 l
 
 	// Left
 	drawSquare( points[4], points[0], points[3], points[7], color, mode, considerLight, lightPosition );
-	// Right
+	//*// Right
 	drawSquare( points[1], points[5], points[6], points[2], color, mode, considerLight, lightPosition );
 	// Top
 	drawSquare( points[4], points[5], points[1], points[0], color, mode, considerLight, lightPosition );
 	// Bottom
 	drawSquare( points[3], points[2], points[6], points[7], color, mode, considerLight, lightPosition );
-
+//*/
 }
 
-void drawVolumeForm( VolumeForm * form, vec3 color, GLenum mode, bool drawVoxelEdges, bool considerLight, vec3 lightPosition ){
+void drawVolumeForm( VolumeForm * form, float voxelDimension, vec3 color, GLenum mode, bool drawVoxelEdges, bool considerLight, vec3 lightPosition ){
     float EnvDimension = 10;
-    float voxelDimension = 0.5f;
+
     FOR( w, EnvDimension/voxelDimension ){
         FOR( h, EnvDimension/voxelDimension ){
             FOR( d, EnvDimension/voxelDimension ){
@@ -129,15 +150,23 @@ void drawVolumeForm( VolumeForm * form, vec3 color, GLenum mode, bool drawVoxelE
     }
 }
 
-void drawFormTree( FormTree * formTree, vec3 color, GLenum mode, bool drawVoxelEdges, bool considerLight, vec3 lightPosition ){
+void drawFormTree( FormTree * formTree, float voxelDimension, vec3 color, GLenum mode, bool drawVoxelEdges, bool considerLight, vec3 lightPosition ){
     CubeVolume box = formTree->getBoundingBox();
-    float voxelDimension = 0.5f;
-std::cout << "bounding" << std::endl;
-    FOR( w, box.getWidth()/voxelDimension ){
-        FOR( h, box.getHeight()/voxelDimension ){
-            FOR( d, box.getDepth()/voxelDimension ){
-                Voxel v( vec3( w*voxelDimension+voxelDimension/2.-box.getWidth()/2., h*voxelDimension+voxelDimension/2.-box.getHeight()/2., d*voxelDimension+voxelDimension/2.-box.getDepth()/2. ), voxelDimension, voxelDimension, voxelDimension );
-                if( tree->voxelVeticesInside( v ) || tree->isCenterInsideVoxel( v ) ){
+//drawVolumeForm( &box, voxelDimension, red, GL_LINE_LOOP, drawVoxelEdges, considerLight, lightPosition );
+    float boxCenterX = box.getCenter().getX();
+    float boxCenterY = box.getCenter().getY();
+    float boxCenterZ = box.getCenter().getZ();
+
+    FOR( w, ceil(box.getWidth()/voxelDimension)+1 ){
+        FOR( h, ceil(box.getHeight()/voxelDimension)+1 ){
+            FOR( d, ceil(box.getDepth()/voxelDimension)+1 ){
+
+                Voxel v( vec3( boxCenterX-box.getWidth()/2. + (w+0.5)*voxelDimension,
+                              boxCenterY-box.getHeight()/2. + (h+0.5)*voxelDimension,
+                              boxCenterZ-box.getDepth()/2. + (d+0.5)*voxelDimension ),
+                        voxelDimension, voxelDimension, voxelDimension );
+
+                if( formTree->voxelVeticesInside( v ) || formTree->isCenterInsideVoxel( v ) ){
                     drawVoxel( v, color, mode, considerLight, lightPosition );
                 }
                 else{
@@ -150,22 +179,51 @@ std::cout << "bounding" << std::endl;
     }
 }
 
+void DrawAxes();
+
 void display(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	glMatrixMode(GL_MODELVIEW);
+	//glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+	//rotation de la scene suivant les mouvements de la souris
+	glRotatef(-angleY,0.0f,0.0f,1.0f);
+	glRotatef(angleX,0.0f,1.0f,0.0f);
 
 	/*
 	drawVolumeForm( s, white, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
 	drawVolumeForm( s2, red, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
 	drawVolumeForm( c, green, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
 	*/
-	drawFormTree( tree, white, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
+	FOR(i, form_list.size()){
+        drawFormTree( form_list[i], 0.2, white, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
+	}
 
-	glFlush();
+	DrawAxes();
+	glutSwapBuffers();// echange des buffers
+	//glFlush();
+}
+
+void DrawAxes(){
+    glColor3f(0.0,1.0,0.0); //Y vert
+    glBegin(GL_LINES);
+        glVertex3f(0,0,0);
+        glVertex3f(0,20,0);
+    glEnd();
+
+    glColor3f(0.0,0.0,1.0); //Z bleu
+    glBegin(GL_LINES);
+        glVertex3f(0,0,0);
+        glVertex3f(0,0,20);
+    glEnd();
+
+    glColor3f(1.0,0.0,0.0); //X rouge
+    glBegin(GL_LINES);
+        glVertex3f(0,0,0);
+        glVertex3f(20,0,0);
+	glEnd();
 }
 
 /* Au cas ou la fenetre est modifiee ou deplacee */
@@ -196,15 +254,24 @@ void keyboard(unsigned char key, int x, int y)
    glutPostRedisplay();
 }
 
+GLvoid manageMouse(int x, int y)
+{
+	angleX=x*720/WIDTH;
+	angleY=-(y*180/HEIGHT-90)*4;
+
+	glutPostRedisplay();
+}
+
 int main(int argc, char **argv)
 {
-   glutInitWindowSize(400, 400);
+   glutInitWindowSize(WIDTH, HEIGHT);
    glutInit(&argc, argv);
-   glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
    glutCreateWindow("Volume");
    init();
    glEnable(GL_DEPTH_TEST);
    glutReshapeFunc(reshape);
+   glutPassiveMotionFunc(manageMouse);
    glutKeyboardFunc(keyboard);
    glutDisplayFunc(display);
    glutMainLoop();

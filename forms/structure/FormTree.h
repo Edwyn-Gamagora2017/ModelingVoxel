@@ -7,7 +7,7 @@
 class FormTree
 {
     public:
-        enum FormOperation{ Intersection, Union };
+        enum FormOperation{ Intersection, Union, Difference };
 
     private:
         VolumeForm * leaf;

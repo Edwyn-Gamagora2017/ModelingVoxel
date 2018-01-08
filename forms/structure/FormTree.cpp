@@ -3,11 +3,14 @@
 
 FormTree::FormTree( VolumeForm * leaf ){
     this->leaf = leaf;
+    this->leftTree = NULL;
+    this->leftTree = NULL;
 }
-FormTree::FormTree( FormOperation operation, FormTree * rightTree, FormTree * leftTree ){
+FormTree::FormTree( FormOperation operation, FormTree * leftTree, FormTree * rightTree ){
     this->operation = operation;
     this->rightTree = rightTree;
     this->leftTree = leftTree;
+    this->leaf = NULL;
 }
 
 FormTree::~FormTree(){}
@@ -23,6 +26,9 @@ bool FormTree::voxelVeticesInside( Voxel voxel ){
         switch( this->operation ){
         case FormTree::FormOperation::Intersection :
             return left && right;
+            break;
+        case FormTree::FormOperation::Difference :
+            return left && !right;
             break;
         case FormTree::FormOperation::Union :
         default:
@@ -42,6 +48,9 @@ bool FormTree::isCenterInsideVoxel( Voxel voxel ){
         switch( this->operation ){
         case FormTree::FormOperation::Intersection :
             return left && right;
+            break;
+        case FormTree::FormOperation::Difference :
+            return left && !right;
             break;
         case FormTree::FormOperation::Union :
         default:
