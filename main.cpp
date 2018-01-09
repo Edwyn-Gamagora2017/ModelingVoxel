@@ -56,7 +56,7 @@ bool considerLight = true;
 vec3 lightPosition(5,0,-5);
 float voxel_dimension = 1;
 // Parameters Mesh
-bool showMesh = true;
+bool showMesh = false;
 bool showSimplification = true;
 
 FormTree * tree;
@@ -561,9 +561,9 @@ void keyboard(unsigned char key, int x, int y)
     case 'g': case 'G':
         drawVoxelEdges = !drawVoxelEdges;
         break;
-    /*case 's': case 'S':
+    case 's': case 'S':
         showSimplification = !showSimplification;
-        break;*/
+        break;
     case '-':
         voxel_dimension *= 2.;
         fillSpace();
