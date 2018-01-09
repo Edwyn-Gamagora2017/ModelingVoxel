@@ -54,9 +54,9 @@ Point3d * color_black = new Point3d( 0,0,0,0 );
 bool drawVoxelEdges = false;
 bool considerLight = true;
 vec3 lightPosition(5,0,-5);
-float voxel_dimension = 0.2;
+float voxel_dimension = 1;
 // Parameters Mesh
-bool showMesh = true;
+bool showMesh = false;
 bool showSimplification = true;
 
 FormTree * tree;
@@ -74,10 +74,21 @@ struct spaceVoxel{
 
 spaceVoxel *** space;
 int spaceW, spaceH, spaceD;
+std::deque<spaceVoxel *> selectedVoxels;
 
 void fillSpace( FormTree * formTree, float voxelDimension );
 void fillSpaceWithFigure( Figure * figure, float voxelDimension );
 Figure * Simplification( Figure * figure, spaceVoxel*** spaceMatrix );
+
+void fillSpace(){
+    if( !showMesh ){
+        fillSpace( tree, voxel_dimension );
+    }else{
+        fillSpaceWithFigure( f, voxel_dimension );
+
+        fSimp = Simplification( f, space );
+    }
+}
 
 /* initialisation d'OpenGL*/
 static void init(void)
@@ -116,6 +127,7 @@ static void init(void)
     FormTree * t3 = new FormTree( cy );
 
     if( !showMesh ){
+        voxel_dimension = 0.1;
         tree = new FormTree(
                     FormTree::Union,
                     t1,
@@ -125,15 +137,11 @@ static void init(void)
                         t3
                         )
                     );
-        fillSpace( tree, voxel_dimension );
-    }else{
-        voxel_dimension = 0.5;
-        fillSpaceWithFigure( f, voxel_dimension );
-
-        fSimp = Simplification( f, space );
-        //tree = new FormTree( fSimp );
-        //fillSpaceWithFigure( fSimp, voxel_dimension );
     }
+    else{
+        voxel_dimension = 1;
+    }
+    fillSpace();
 }
 
 void drawSquare( vec3 p1, vec3 p2, vec3 p3, vec3 p4, vec3 color, GLenum mode, bool considerLight, vec3 lightPosition ){
@@ -201,7 +209,51 @@ void drawVolumeForm( VolumeForm * form, float voxelDimension, vec3 color, GLenum
     }
 }
 
+bool isSpaceVoxelVisible( spaceVoxel voxel ){
+    return voxel.value > 0;
+}
+
+void selectVisibleVoxels( spaceVoxel *** spaceMatrix ){
+    selectedVoxels.clear();
+
+    // Select Visible Voxels
+    FOR( w, spaceW ){
+        FOR( h, spaceH){
+            FOR( d, spaceD ){
+                if( isSpaceVoxelVisible( spaceMatrix[w][h][d] )
+                   && !(w > 0 && w < spaceW-1 && isSpaceVoxelVisible( (spaceMatrix[w+1][h][d]) ) && isSpaceVoxelVisible( (spaceMatrix[w-1][h][d]) )
+                   && h > 0 && h < spaceH-1 && isSpaceVoxelVisible( (spaceMatrix[w][h+1][d]) ) && isSpaceVoxelVisible( (spaceMatrix[w][h-1][d]) )
+                   && d > 0 && d < spaceD-1 && isSpaceVoxelVisible( (spaceMatrix[w][h][d+1]) ) && isSpaceVoxelVisible( (spaceMatrix[w][h][d-1]) ) )
+                )
+                {
+                    selectedVoxels.push_back( &space[w][h][d] );
+                }
+            }
+        }
+    }
+    std::cout << "Visible Voxels : " << selectedVoxels.size() << std::endl;
+}
+
+void clearSpace(){
+    // clear space
+    if( space != NULL ){
+        FOR( w, spaceW ){
+            if( space[w] != NULL ){
+                FOR( h, spaceH){
+                    if( space[w][h] != NULL ){
+                        delete space[w][h];
+                    }
+                }
+                delete space[w];
+            }
+        }
+        delete space;
+    }
+}
+
 void fillSpace( FormTree * formTree, float voxelDimension ){
+    clearSpace();
+
     CubeVolume box = formTree->getBoundingBox();
     float boxCenterX = box.getCenter().getX();
     float boxCenterY = box.getCenter().getY();
@@ -235,9 +287,13 @@ void fillSpace( FormTree * formTree, float voxelDimension ){
             }
         }
     }
+
+    selectVisibleVoxels( space );
 }
 
 void fillSpaceWithFigure( Figure * figure, float voxelDimension ){
+    clearSpace();
+
     CubeVolume box = figure->getBoundingBox();
     float boxCenterX = box.getCenter().getX();
     float boxCenterY = box.getCenter().getY();
@@ -273,9 +329,29 @@ void fillSpaceWithFigure( Figure * figure, float voxelDimension ){
             }
         }
     }
+
+    selectVisibleVoxels( space );
 }
 
-void drawSpace( FormTree * formTree, spaceVoxel*** spaceMatrix, float voxelDimension, vec3 color, GLenum mode, bool drawVoxelEdges, bool considerLight, vec3 lightPosition ){
+void drawSpace( std::deque<spaceVoxel*> voxels, spaceVoxel *** spaceMatrix, float voxelDimension, vec3 color, GLenum mode, bool drawVoxelEdges, bool considerLight, vec3 lightPosition ){
+    FOR( i, voxels.size() ){
+        drawVoxel( *(voxels[i]->voxel), color, mode, considerLight, lightPosition );
+    }
+
+    if( drawVoxelEdges ){
+        FOR( w, spaceW ){
+            FOR( h, spaceH){
+                FOR( d, spaceD ){
+                    if( !isSpaceVoxelVisible( spaceMatrix[w][h][d]) ){
+                            drawVoxel( *(spaceMatrix[w][h][d].voxel), color, GL_LINE_LOOP, false, lightPosition );
+                    }
+                }
+            }
+        }
+    }
+}
+
+/*void drawSpace( FormTree * formTree, spaceVoxel*** spaceMatrix, float voxelDimension, vec3 color, GLenum mode, bool drawVoxelEdges, bool considerLight, vec3 lightPosition ){
     CubeVolume box = formTree->getBoundingBox();
 //drawVolumeForm( &box, voxelDimension, red, GL_LINE_LOOP, drawVoxelEdges, considerLight, lightPosition );
     float boxCenterX = box.getCenter().getX();
@@ -297,7 +373,7 @@ void drawSpace( FormTree * formTree, spaceVoxel*** spaceMatrix, float voxelDimen
             }
         }
     }
-}
+}*/
 
 Figure * Simplification( Figure * figure, spaceVoxel*** spaceMatrix )
 {
@@ -383,7 +459,8 @@ void display(void)
 	drawVolumeForm( c, green, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
 	*/
 	if( !showMesh ){
-        drawSpace( tree, space, voxel_dimension, white, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
+        drawSpace( selectedVoxels, space, voxel_dimension, white, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
+        //drawSpace( tree, space, voxel_dimension, white, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
 	}
 	else{
         if( !showSimplification ){
@@ -493,6 +570,14 @@ void keyboard(unsigned char key, int x, int y)
         break;
     case 's': case 'S':
         showSimplification = !showSimplification;
+        break;
+    case '-':
+        voxel_dimension *= 2.;
+        fillSpace();
+        break;
+    case '+':
+        voxel_dimension /= 2.;
+        fillSpace();
         break;
 
    case ESC:
