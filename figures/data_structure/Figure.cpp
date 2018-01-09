@@ -1,5 +1,6 @@
 #include "Figure.h"
 #include <iostream>
+#include <math.h>
 
 #include "CubeVolume.h"
 
@@ -118,7 +119,6 @@ void Figure::centralizeFigure()
         }
 
         centreResult = centreResult.division( this->points.size() );
-        this->center = centreResult;
 
         for(int i=0; i<this->points.size(); i++)
         {
@@ -255,15 +255,20 @@ CubeVolume Figure::getBoundingBox(){
         for(int i=1; i<this->points.size(); i++)
         {
             // MIN
-            if( minPoint.getX() > this->points[i]->getX() ){ minPoint.setX( this->points[i]->getX() ); }
-            if( minPoint.getY() > this->points[i]->getY() ){ minPoint.setY( this->points[i]->getY() ); }
-            if( minPoint.getZ() > this->points[i]->getZ() ){ minPoint.setZ( this->points[i]->getZ() ); }
+            if( minPoint.getX() > this->points[i]->getX()-this->center.getX() ){ minPoint.setX( this->points[i]->getX()-this->center.getX() ); }
+            if( minPoint.getY() > this->points[i]->getY()-this->center.getY() ){ minPoint.setY( this->points[i]->getY()-this->center.getY() ); }
+            if( minPoint.getZ() > this->points[i]->getZ()-this->center.getZ() ){ minPoint.setZ( this->points[i]->getZ()-this->center.getZ() ); }
             // MAX
-            if( maxPoint.getX() < this->points[i]->getX() ){ maxPoint.setX( this->points[i]->getX() ); }
-            if( maxPoint.getY() < this->points[i]->getY() ){ maxPoint.setY( this->points[i]->getY() ); }
-            if( maxPoint.getZ() < this->points[i]->getZ() ){ maxPoint.setZ( this->points[i]->getZ() ); }
+            if( maxPoint.getX() < this->points[i]->getX()-this->center.getX() ){ maxPoint.setX( this->points[i]->getX()-this->center.getX() ); }
+            if( maxPoint.getY() < this->points[i]->getY()-this->center.getY() ){ maxPoint.setY( this->points[i]->getY()-this->center.getY() ); }
+            if( maxPoint.getZ() < this->points[i]->getZ()-this->center.getZ() ){ maxPoint.setZ( this->points[i]->getZ()-this->center.getZ() ); }
         }
-        return Voxel( this->center, maxPoint.getX()-minPoint.getX(), maxPoint.getY()-minPoint.getY(), maxPoint.getZ()-minPoint.getZ() );
+
+        if( -minPoint.getX() > maxPoint.getX() ){ maxPoint.setX( -minPoint.getX() ); }
+        if( -minPoint.getY() > maxPoint.getY() ){ maxPoint.setY( -minPoint.getY() ); }
+        if( -minPoint.getZ() > maxPoint.getZ() ){ maxPoint.setZ( -minPoint.getZ() ); }
+
+        return Voxel( this->center, ceil(maxPoint.getX()*2), ceil(maxPoint.getY()*2), ceil(maxPoint.getZ()*2) );
     }
     return Voxel( this->center, 1, 1, 1 );
 }

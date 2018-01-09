@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1515447681 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\main.cpp
+1515523856 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\main.cpp
 	<windows.h>
 	<GL/glut.h>
 	<GL/glu.h>
@@ -389,9 +389,10 @@
 	<deque>
 	"Point3d.h"
 
-1515431114 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\figures\data_structure\figure.cpp
+1515524123 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\figures\data_structure\figure.cpp
 	"Figure.h"
 	<iostream>
+	<math.h>
 	"CubeVolume.h"
 
 1515431077 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\figures\data_structure\figure.h
@@ -421,7 +422,7 @@
 	"../figures/data_structure/Figure.h"
 	<string>
 
-1515428056 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\utils\offfile.cpp
+1515518483 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\utils\offfile.cpp
 	"OffFile.h"
 	<iostream>
 	<fstream>

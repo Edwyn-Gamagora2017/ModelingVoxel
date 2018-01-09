@@ -56,7 +56,7 @@ bool considerLight = true;
 vec3 lightPosition(5,0,-5);
 float voxel_dimension = 1;
 // Parameters Mesh
-bool showMesh = false;
+bool showMesh = true;
 bool showSimplification = true;
 
 FormTree * tree;
@@ -221,9 +221,9 @@ void selectVisibleVoxels( spaceVoxel *** spaceMatrix ){
         FOR( h, spaceH){
             FOR( d, spaceD ){
                 if( isSpaceVoxelVisible( spaceMatrix[w][h][d] )
-                   && !(w > 0 && w < spaceW-1 && isSpaceVoxelVisible( (spaceMatrix[w+1][h][d]) ) && isSpaceVoxelVisible( (spaceMatrix[w-1][h][d]) )
+                   && (!(w > 0 && w < spaceW-1 && isSpaceVoxelVisible( (spaceMatrix[w+1][h][d]) ) && isSpaceVoxelVisible( (spaceMatrix[w-1][h][d]) )
                    && h > 0 && h < spaceH-1 && isSpaceVoxelVisible( (spaceMatrix[w][h+1][d]) ) && isSpaceVoxelVisible( (spaceMatrix[w][h-1][d]) )
-                   && d > 0 && d < spaceD-1 && isSpaceVoxelVisible( (spaceMatrix[w][h][d+1]) ) && isSpaceVoxelVisible( (spaceMatrix[w][h][d-1]) ) )
+                   && d > 0 && d < spaceD-1 && isSpaceVoxelVisible( (spaceMatrix[w][h][d+1]) ) && isSpaceVoxelVisible( (spaceMatrix[w][h][d-1]) ) ) || showMesh )
                 )
                 {
                     selectedVoxels.push_back( &space[w][h][d] );
@@ -260,9 +260,9 @@ void fillSpace( FormTree * formTree, float voxelDimension ){
     float boxCenterZ = box.getCenter().getZ();
 
     // Matrix to store values
-    spaceW = ceil(box.getWidth()/voxel_dimension)+1;
-    spaceH = ceil(box.getHeight()/voxel_dimension)+1;
-    spaceD = ceil(box.getDepth()/voxel_dimension)+1;
+    spaceW = ceil(box.getWidth()/voxel_dimension)+2;
+    spaceH = ceil(box.getHeight()/voxel_dimension)+2;
+    spaceD = ceil(box.getDepth()/voxel_dimension)+2;
 
     // Calculating Voxels
     space = new spaceVoxel**[ spaceW ];
@@ -319,6 +319,7 @@ void fillSpaceWithFigure( Figure * figure, float voxelDimension ){
 
                 space[w][h][d].voxel = v;
                 std::deque<Point3d *> vertices = figure->voxelVeticesInsideFigure( *v );
+
                 if( vertices.size() > 0 ){//|| figure->isCenterInsideVoxel( *v ) ){
                     space[w][h][d].value = 1;
                     space[w][h][d].vertices = vertices;
@@ -343,7 +344,7 @@ void drawSpace( std::deque<spaceVoxel*> voxels, spaceVoxel *** spaceMatrix, floa
             FOR( h, spaceH){
                 FOR( d, spaceD ){
                     if( !isSpaceVoxelVisible( spaceMatrix[w][h][d]) ){
-                            drawVoxel( *(spaceMatrix[w][h][d].voxel), color, GL_LINE_LOOP, false, lightPosition );
+                        drawVoxel( *(spaceMatrix[w][h][d].voxel), red, GL_LINE_LOOP, false, lightPosition );
                     }
                 }
             }
@@ -351,59 +352,36 @@ void drawSpace( std::deque<spaceVoxel*> voxels, spaceVoxel *** spaceMatrix, floa
     }
 }
 
-/*void drawSpace( FormTree * formTree, spaceVoxel*** spaceMatrix, float voxelDimension, vec3 color, GLenum mode, bool drawVoxelEdges, bool considerLight, vec3 lightPosition ){
-    CubeVolume box = formTree->getBoundingBox();
-//drawVolumeForm( &box, voxelDimension, red, GL_LINE_LOOP, drawVoxelEdges, considerLight, lightPosition );
-    float boxCenterX = box.getCenter().getX();
-    float boxCenterY = box.getCenter().getY();
-    float boxCenterZ = box.getCenter().getZ();
-
-    FOR( w, spaceW ){
-        FOR( h, spaceH){
-            FOR( d, spaceD ){
-
-                if( spaceMatrix[w][h][d].value > 0){
-                    drawVoxel( *(spaceMatrix[w][h][d].voxel), color, mode, considerLight, lightPosition );
-                }
-                else{
-                    if( drawVoxelEdges ){
-                        drawVoxel( *(spaceMatrix[w][h][d].voxel), color, GL_LINE_LOOP, false, lightPosition );
-                    }
-                }
-            }
-        }
-    }
-}*/
-
 Figure * Simplification( Figure * figure, spaceVoxel*** spaceMatrix )
 {
     std::deque<Point3d*> newPoints;
-    std::deque<int> origPointsCenters( figure->getPoints().size() );
+    std::deque<int> origPointsCenters;
 	std::deque<FigureFace*> newFaces;
 
-    // For each voxel, choose the center
-    FOR( w, spaceW ){
-        FOR( h, spaceH){
-            FOR( d, spaceD ){
-                if( spaceMatrix[w][h][d].value > 0 && spaceMatrix[w][h][d].vertices.size() > 0){
-                    // Calculate average
-                    vec3 center = spaceMatrix[w][h][d].vertices[0]->toVector();
-                    for( int i=1; i<spaceMatrix[w][h][d].vertices.size(); i++ ){
-                        center.addition( spaceMatrix[w][h][d].vertices[i]->toVector() );
-                    }
-                    center = center.division( spaceMatrix[w][h][d].vertices.size() );
-                    int newPointIndex = newPoints.size();
-                    newPoints.push_back( new Point3d( center.getX(), center.getY(), center.getZ(), newPointIndex ) );
+    FOR(i,figure->getPoints().size()){
+        origPointsCenters.push_back( -1 );
+    }
 
-                    // Storing center for each original point
-                    for( int i=0; i<spaceMatrix[w][h][d].vertices.size(); i++ ){
-                        origPointsCenters[ spaceMatrix[w][h][d].vertices[i]->getIndex() ] = newPointIndex;
-                    }
-                }
+    // For each voxel, choose the center
+    FOR( k, selectedVoxels.size() ){
+        if( selectedVoxels[k]->vertices.size() > 0){
+            // Calculate average
+            vec3 center = selectedVoxels[k]->vertices[0]->toVector();
+
+            for( int i=1; i<selectedVoxels[k]->vertices.size(); i++ ){
+                center = center.addition( selectedVoxels[k]->vertices[i]->toVector() );
+            }
+            center = center.division( selectedVoxels[k]->vertices.size() );
+
+            int newPointIndex = newPoints.size();
+            newPoints.push_back( new Point3d( center.getX(), center.getY(), center.getZ(), newPointIndex ) );
+
+            // Storing center for each original point
+            for( int i=0; i<selectedVoxels[k]->vertices.size(); i++ ){
+                origPointsCenters[ selectedVoxels[k]->vertices[i]->getIndex() ] = newPointIndex;
             }
         }
     }
-
     // For each face, set new points
     FOR( i, figure->getFaces().size() ){
         std::deque<Point3d *> pointsFace = figure->getFaces()[i]->getPoints();
@@ -413,17 +391,23 @@ Figure * Simplification( Figure * figure, spaceVoxel*** spaceMatrix )
         bool includeFace = true;
         FOR( j, pointsFace.size() ){
             int centerIndex = origPointsCenters[ pointsFace[ j ]->getIndex() ];
-            newPointsFace.push_back( newPoints[ centerIndex ] );
-            pointsFaceCenter.push_back( centerIndex );
+            if( centerIndex > 0 ){
+                newPointsFace.push_back( newPoints[ centerIndex ] );
+                pointsFaceCenter.push_back( centerIndex );
 
-            // Check if some other original point has the same center
-            /*FOR( k, pointsFaceCenter.size()-1 ){
-                if( pointsFaceCenter[k] == centerIndex ){
-                    // not include face
-                    includeFace = false;
-                    break;
+                // Check if some other original point has the same center
+                FOR( k, pointsFaceCenter.size()-1 ){
+                    if( pointsFaceCenter[k] == centerIndex ){
+                        // not include face
+                        includeFace = false;
+                        break;
+                    }
                 }
-            }*/
+            }
+            else{
+                includeFace = false;
+                break;
+            }
         }
         if( includeFace ){
             vec3 normal = newPointsFace[1]->toVector().soustraction( newPointsFace[0]->toVector() ).produitVectoriel( newPointsFace[2]->toVector().soustraction( newPointsFace[0]->toVector() ) );
@@ -463,13 +447,20 @@ void display(void)
         //drawSpace( tree, space, voxel_dimension, white, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
 	}
 	else{
-        if( !showSimplification ){
-            drawFigureFaces( f, GL_TRIANGLES, considerLight, f->getCouleur() );
-            drawFigureFaces( f, GL_LINE_STRIP, considerLight, color_black );
+        if( !drawVoxelEdges ){
+            // Draw Figure
+            if( !showSimplification ){
+                drawFigureFaces( f, GL_TRIANGLES, considerLight, f->getCouleur() );
+                drawFigureFaces( f, GL_LINE_STRIP, considerLight, color_black );
+            }
+            else{
+                drawFigureFaces( fSimp, GL_TRIANGLES, considerLight, f->getCouleur() );
+                drawFigureFaces( fSimp, GL_LINE_STRIP, considerLight, color_black );
+            }
         }
         else{
-            drawFigureFaces( fSimp, GL_TRIANGLES, considerLight, f->getCouleur() );
-            drawFigureFaces( fSimp, GL_LINE_STRIP, considerLight, color_black );
+            // Draw Voxels
+            drawSpace( selectedVoxels, space, voxel_dimension, white, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
         }
 	}
 
@@ -492,11 +483,8 @@ void drawFigureFaces( Figure * f, GLenum mode, bool considerLight, Point3d * cou
         //glBegin(GL_POLYGON);
         glBegin(mode);
 
-//std::cout << "====" << std::endl;
         for(int j=0; j< faces[i]->getPoints().size(); j++)
         {
-/*std::cout << faces[i]->getPoints()[j]->getIndex() << std::endl;
-std::cout << faces[i]->getPoints()[j]->toString() << std::endl;*/
             Point3d * p = faces[i]->getPoints()[j];
 
             if( considerLight ){
@@ -554,7 +542,12 @@ void reshape(int w, int h)
    glViewport(0, 0, (GLsizei) w, (GLsizei) h);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   glOrtho(-6, 6, -6, 6, -6, 6);
+   if( !showMesh ){
+        glOrtho(-5, 5, -5, 5, -5, 5);
+   }
+   else{
+        glOrtho(-9, 9, -9, 9, -9, 9);
+   }
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
 }
@@ -568,9 +561,9 @@ void keyboard(unsigned char key, int x, int y)
     case 'g': case 'G':
         drawVoxelEdges = !drawVoxelEdges;
         break;
-    case 's': case 'S':
+    /*case 's': case 'S':
         showSimplification = !showSimplification;
-        break;
+        break;*/
     case '-':
         voxel_dimension *= 2.;
         fillSpace();
