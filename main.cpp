@@ -48,6 +48,7 @@ vec3 white( 1,1,1 );
 vec3 red( 1,0,0 );
 vec3 green( 0,1,0 );
 vec3 blue( 0,0,1 );
+Point3d * color_black = new Point3d( 0,0,0,0 );
 
 // Parameters
 bool drawVoxelEdges = false;
@@ -55,13 +56,14 @@ bool considerLight = true;
 vec3 lightPosition(5,0,-5);
 float voxel_dimension = 0.2;
 // Parameters Mesh
+bool showMesh = true;
 bool showSimplification = true;
 
 FormTree * tree;
 SphereVolume * s, * s2, * s3;
 CubeVolume * c, * c2, * c3;
 CylinderVolume * cy;
-Figure * f;
+Figure * f, * fSimp;
 
 struct spaceVoxel{
     public :
@@ -113,7 +115,7 @@ static void init(void)
 
     FormTree * t3 = new FormTree( cy );
 
-    if( !showSimplification ){
+    if( !showMesh ){
         tree = new FormTree(
                     FormTree::Union,
                     t1,
@@ -125,12 +127,12 @@ static void init(void)
                     );
         fillSpace( tree, voxel_dimension );
     }else{
-        voxel_dimension = 1.5;
+        voxel_dimension = 0.5;
         fillSpaceWithFigure( f, voxel_dimension );
 
-        f = Simplification( f, space );
-        tree = new FormTree( f );;
-        fillSpace( tree, voxel_dimension );
+        fSimp = Simplification( f, space );
+        //tree = new FormTree( fSimp );
+        //fillSpaceWithFigure( fSimp, voxel_dimension );
     }
 }
 
@@ -318,7 +320,7 @@ Figure * Simplification( Figure * figure, spaceVoxel*** spaceMatrix )
                     newPoints.push_back( new Point3d( center.getX(), center.getY(), center.getZ(), newPointIndex ) );
 
                     // Storing center for each original point
-                    for( int i=1; i<spaceMatrix[w][h][d].vertices.size(); i++ ){
+                    for( int i=0; i<spaceMatrix[w][h][d].vertices.size(); i++ ){
                         origPointsCenters[ spaceMatrix[w][h][d].vertices[i]->getIndex() ] = newPointIndex;
                     }
                 }
@@ -339,13 +341,13 @@ Figure * Simplification( Figure * figure, spaceVoxel*** spaceMatrix )
             pointsFaceCenter.push_back( centerIndex );
 
             // Check if some other original point has the same center
-            FOR( k, pointsFaceCenter.size()-1 ){
+            /*FOR( k, pointsFaceCenter.size()-1 ){
                 if( pointsFaceCenter[k] == centerIndex ){
                     // not include face
                     includeFace = false;
                     break;
                 }
-            }
+            }*/
         }
         if( includeFace ){
             vec3 normal = newPointsFace[1]->toVector().soustraction( newPointsFace[0]->toVector() ).produitVectoriel( newPointsFace[2]->toVector().soustraction( newPointsFace[0]->toVector() ) );
@@ -357,11 +359,12 @@ Figure * Simplification( Figure * figure, spaceVoxel*** spaceMatrix )
 	result->setPoints( newPoints );
 	result->setFaces( newFaces );
 
-	result->centralizeFigure();
+	//result->centralizeFigure();
 	return result;
 }
 
 void DrawAxes();
+void drawFigureFaces( Figure * f, GLenum mode, bool considerLight, Point3d * couleur = new Point3d(0,0,0,-1) );
 
 void display(void)
 {
@@ -379,11 +382,73 @@ void display(void)
 	drawVolumeForm( s2, red, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
 	drawVolumeForm( c, green, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
 	*/
-    drawSpace( tree, space, voxel_dimension, white, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
+	if( !showMesh ){
+        drawSpace( tree, space, voxel_dimension, white, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
+	}
+	else{
+        if( !showSimplification ){
+            drawFigureFaces( f, GL_TRIANGLES, considerLight, f->getCouleur() );
+            drawFigureFaces( f, GL_LINE_STRIP, considerLight, color_black );
+        }
+        else{
+            drawFigureFaces( fSimp, GL_TRIANGLES, considerLight, f->getCouleur() );
+            drawFigureFaces( fSimp, GL_LINE_STRIP, considerLight, color_black );
+        }
+	}
 
 	DrawAxes();
 	glutSwapBuffers();// echange des buffers
 	//glFlush();
+}
+
+void drawFigureFaces( Figure * f, GLenum mode, bool considerLight, Point3d * couleur ){
+	std::deque<FigureFace*> faces = f->getFaces();
+	vec3 * scale = f->getScale();
+    vec3 * translation = f->getTranslation();
+
+    for(int i=0; i<faces.size(); i++)
+    {
+        glPushMatrix();
+        //glBegin(GL_LINE_LOOP);
+        //glBegin(GL_TRIANGLES);
+        //glBegin(GL_POINTS);
+        //glBegin(GL_POLYGON);
+        glBegin(mode);
+
+//std::cout << "====" << std::endl;
+        for(int j=0; j< faces[i]->getPoints().size(); j++)
+        {
+/*std::cout << faces[i]->getPoints()[j]->getIndex() << std::endl;
+std::cout << faces[i]->getPoints()[j]->toString() << std::endl;*/
+            Point3d * p = faces[i]->getPoints()[j];
+
+            if( considerLight ){
+                // Color based on light
+                float lightFactor = lightPosition.soustraction( p->toVector() ).normalized().produitScalaire( faces[i]->getNormal().normalized() );
+                if( lightFactor < 0.1f ){
+                    // simulating environment light
+                    lightFactor = 0.1f;
+                }
+                glColor3f(lightFactor*couleur->getX(), lightFactor*couleur->getY(), lightFactor*couleur->getZ());
+            }
+            else{
+                glColor3f(couleur->getX(), couleur->getY(), couleur->getZ());
+            }
+
+            glVertex3f(
+              /*(p->getX()*scale->getX())+translation->getX(),
+              (p->getY()*scale->getY())+translation->getY(),
+              (p->getZ()*scale->getZ())+translation->getZ()*/
+                p->getX(), p->getY(), p->getZ()
+            );
+        }
+        // Closing figure
+        Point3d * p = faces[i]->getPoints()[0];
+        glVertex3f(p->getX(), p->getY(), p->getZ());
+
+        glEnd();
+        glPopMatrix();
+    }
 }
 
 void DrawAxes(){
