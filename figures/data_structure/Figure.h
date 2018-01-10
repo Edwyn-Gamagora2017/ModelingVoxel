@@ -54,6 +54,8 @@ public:
     bool pointInside( vec3 point );
     CubeVolume getBoundingBox();
 
+    Edge* hasEdge( Point3d * pA, Point3d * pB );
+
 protected:
     void setRotation(vec3 * rotation);
 	void setScale(vec3 * scale);
@@ -61,8 +63,6 @@ protected:
 	void setCouleur(Point3d * couleur);
 	void setInverseNormal(bool inverseNormal);
 	void setDoubleSense(bool doubleSense);
-
-	Edge* hasEdge( Point3d * pA, Point3d * pB );
 
 	virtual void generatePointsAndFaces();
 };

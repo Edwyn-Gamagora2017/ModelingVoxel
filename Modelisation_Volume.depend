@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1515524511 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\main.cpp
+1515606053 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\main.cpp
 	<windows.h>
 	<GL/glut.h>
 	<GL/glu.h>
@@ -395,7 +395,7 @@
 	<math.h>
 	"CubeVolume.h"
 
-1515431077 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\figures\data_structure\figure.h
+1515603317 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\figures\data_structure\figure.h
 	"vec3.h"
 	"Point3d.h"
 	"Edge.h"
@@ -413,10 +413,11 @@
 	"math.h"
 	"../../utils/utils.h"
 
-1511207128 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\utils\utils.h
+1515602743 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\utils\utils.h
 	<string>
 	<sstream>
 	<iostream>
+	"../figures/data_structure/vec3.h"
 
 1511207128 c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\utils\offfile.h
 	"../figures/data_structure/Figure.h"
@@ -432,7 +433,7 @@
 	"../figures/data_structure/vec3.h"
 	"../figures/data_structure/FigureFace.h"
 
-1511207128 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\utils\utils.cpp
+1515604237 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\utils\utils.cpp
 	"utils.h"
 
 1511288057 source:c:\users\edwyn luis\documents\lyon\gamagora\modelisation_geometrique\projetos\modelisationvolume\figures\data_structure\point3d.cpp

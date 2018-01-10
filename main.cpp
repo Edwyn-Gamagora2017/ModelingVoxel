@@ -56,7 +56,7 @@ bool considerLight = true;
 vec3 lightPosition(5,0,-5);
 float voxel_dimension = 1;
 // Parameters Mesh
-bool showMesh = false;
+bool showMesh = true;
 bool showSimplification = true;
 
 FormTree * tree;
@@ -78,7 +78,7 @@ std::deque<spaceVoxel *> selectedVoxels;
 
 void fillSpace( FormTree * formTree, float voxelDimension );
 void fillSpaceWithFigure( Figure * figure, float voxelDimension );
-Figure * Simplification( Figure * figure, spaceVoxel*** spaceMatrix );
+Figure * Simplification( Figure * figure );
 
 void fillSpace(){
     if( !showMesh ){
@@ -86,7 +86,7 @@ void fillSpace(){
     }else{
         fillSpaceWithFigure( f, voxel_dimension );
 
-        fSimp = Simplification( f, space );
+        fSimp = Simplification( f );
     }
 }
 
@@ -352,7 +352,7 @@ void drawSpace( std::deque<spaceVoxel*> voxels, spaceVoxel *** spaceMatrix, floa
     }
 }
 
-Figure * Simplification( Figure * figure, spaceVoxel*** spaceMatrix )
+Figure * Simplification( Figure * figure )
 {
     std::deque<Point3d*> newPoints;
     std::deque<int> origPointsCenters;
@@ -420,6 +420,99 @@ Figure * Simplification( Figure * figure, spaceVoxel*** spaceMatrix )
 	result->setFaces( newFaces );
 
 	//result->centralizeFigure();
+	return result;
+}
+//*
+Figure * SubDivision( Figure * figure )
+{
+    std::deque<Point3d*> newPoints;
+	std::deque<FigureFace*> newFaces;
+
+	std::deque<int> edgeDivised_newPointIndex;
+	std::deque<int> oldPoint_newPointIndex;
+
+	FOR( i, figure->getEdges().size() ){
+        edgeDivised_newPointIndex.push_back( -1 );
+	}
+	FOR( i, figure->getPoints().size() ){
+        oldPoint_newPointIndex.push_back( -1 );
+	}
+
+	// For each face, calculate new points
+    FOR( i, figure->getFaces().size() ){
+        std::deque<Edge*> faceEdges = figure->getFaces()[i]->getEdges() ;
+        //std::deque<Point3d*> fPoints = figure->getFaces()[i]->getPoints() ;
+
+        // Center Points
+        FOR( j, faceEdges.size() ){
+            if( edgeDivised_newPointIndex[ faceEdges[j]->getIndex() ] == -1 ){
+                vec3 pointA = faceEdges[j]->getPointA()->toVector();
+                vec3 pointB = faceEdges[j]->getPointB()->toVector();
+                // Update old Points indexes
+                if( oldPoint_newPointIndex[ faceEdges[j]->getPointA()->getIndex() ] == -1 ){
+                    int pointIndex = newPoints.size();
+                    newPoints.push_back( new Point3d( pointA.getX(), pointA.getY(), pointA.getZ(), pointIndex ));
+                    oldPoint_newPointIndex[ faceEdges[j]->getPointA()->getIndex() ] = pointIndex;
+                }
+                if( oldPoint_newPointIndex[ faceEdges[j]->getPointB()->getIndex() ] == -1 ){
+                    int pointIndex = newPoints.size();
+                    newPoints.push_back( new Point3d( pointB.getX(), pointB.getY(), pointB.getZ(), pointIndex ));
+                    oldPoint_newPointIndex[ faceEdges[j]->getPointB()->getIndex() ] = pointIndex;
+                }
+
+                vec3 newPoint = pointA.addition( pointB ).division(2);
+                int newPointIndex = newPoints.size();
+                newPoints.push_back( new Point3d( newPoint.getX(), newPoint.getY(), newPoint.getZ(), newPointIndex ) );
+                edgeDivised_newPointIndex[ faceEdges[j]->getIndex() ] = newPointIndex;
+            }
+        }
+    }
+
+    // For each face, calculate new faces
+    FOR( i, figure->getFaces().size() ){
+        std::deque<Point3d*> facePoints = figure->getFaces()[i]->getPoints() ;
+
+        // New faces
+        // New centers
+        std::deque<Point3d*> newFacePoints;
+        // 2
+        // 1 3
+        // 0 5 4
+
+        Edge * edge1 = figure->hasEdge( facePoints[0], facePoints[1] );
+        Edge * edge2 = figure->hasEdge( facePoints[1], facePoints[2] );
+        Edge * edge3 = figure->hasEdge( facePoints[2], facePoints[0] );
+
+        Point3d * p0 = newPoints[ oldPoint_newPointIndex[ facePoints[0]->getIndex() ] ];
+        Point3d * p1 = newPoints[ edgeDivised_newPointIndex[ edge1->getIndex() ] ];
+        Point3d * p2 = newPoints[ oldPoint_newPointIndex[ facePoints[1]->getIndex() ] ];
+        Point3d * p3 = newPoints[ edgeDivised_newPointIndex[ edge2->getIndex() ] ];
+        Point3d * p4 = newPoints[ oldPoint_newPointIndex[ facePoints[2]->getIndex() ] ];
+        Point3d * p5 = newPoints[ edgeDivised_newPointIndex[ edge3->getIndex() ] ];
+        // 0 1 5
+        newFacePoints.push_back( p0 );newFacePoints.push_back( p1 );newFacePoints.push_back( p5 );
+        newFaces.push_back( new FigureFace( newFacePoints, getNormal( p0->toVector(), p1->toVector(), p5->toVector() ), newFaces.size() ) );
+        newFacePoints.clear();
+
+        // 1 2 3
+        newFacePoints.push_back( p1 );newFacePoints.push_back( p2 );newFacePoints.push_back( p3 );
+        newFaces.push_back( new FigureFace( newFacePoints, getNormal( p1->toVector(), p2->toVector(), p3->toVector() ), newFaces.size() ) );
+        newFacePoints.clear();
+
+        // 3 4 5
+        newFacePoints.push_back( p3 );newFacePoints.push_back( p4 );newFacePoints.push_back( p5 );
+        newFaces.push_back( new FigureFace( newFacePoints, getNormal( p3->toVector(), p4->toVector(), p5->toVector() ), newFaces.size() ) );
+        newFacePoints.clear();
+
+        // 1 3 5
+        newFacePoints.push_back( p1 );newFacePoints.push_back( p3 );newFacePoints.push_back( p5 );
+        newFaces.push_back( new FigureFace( newFacePoints, getNormal( p1->toVector(), p3->toVector(), p5->toVector() ), newFaces.size() ) );
+        newFacePoints.clear();
+    }
+    Figure * result = new Figure( new vec3(0,0,0), new vec3(1,1,1), new vec3(0,0,0), new Point3d(1,1,1,-1), false, false );
+	result->setPoints( newPoints );
+	result->setFaces( newFaces );
+
 	return result;
 }
 
@@ -546,7 +639,8 @@ void reshape(int w, int h)
         glOrtho(-5, 5, -5, 5, -5, 5);
    }
    else{
-        glOrtho(-9, 9, -9, 9, -9, 9);
+        int orthoD = 12;
+        glOrtho(-orthoD, orthoD, -orthoD, orthoD, -orthoD, orthoD);
    }
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
@@ -563,6 +657,11 @@ void keyboard(unsigned char key, int x, int y)
         break;
     case 's': case 'S':
         showSimplification = !showSimplification;
+        break;
+    case 'd': case 'D':
+        if( showMesh ){
+            fSimp = SubDivision( fSimp );
+        }
         break;
     case '-':
         voxel_dimension *= 2.;

@@ -30,3 +30,7 @@ double clamp(double valeur, double min, double max) {
 {
 	return vec3(clamp(valeur.getX(), min, max), clamp(valeur.getY(), min, max), clamp(valeur.getZ(), min, max));
 }*/
+
+vec3 getNormal( vec3 p1, vec3 p2, vec3 p3 ){
+    return p2.soustraction( p1 ).produitVectoriel( p3.soustraction( p1 ) );
+}
