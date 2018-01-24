@@ -20,6 +20,7 @@ class VolumeForm
         virtual ~VolumeForm();
 
         vec3 getCenter();
+        void setCenter( vec3 newCenter );
 
         /** \brief given a voxel, verifies which vertices are inside the form
          *

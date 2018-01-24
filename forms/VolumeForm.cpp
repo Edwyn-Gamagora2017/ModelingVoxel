@@ -14,6 +14,9 @@ VolumeForm::~VolumeForm()
 vec3 VolumeForm::getCenter(){
     return this->center;
 }
+void VolumeForm::setCenter( vec3 newCenter ){
+    this->center = newCenter;
+}
 
 std::deque<vec3> VolumeForm::voxelVeticesInside( Voxel voxel ){
     std::deque<vec3> result;

@@ -54,16 +54,22 @@ Point3d * color_black = new Point3d( 0,0,0,0 );
 bool drawVoxelEdges = false;
 bool considerLight = true;
 vec3 lightPosition(5,0,-5);
-float voxel_dimension = 1;
+float voxel_dimension = 2;
+float showThreshold = 3;
 // Parameters Mesh
-bool showMesh = true;
+bool showMesh = false;
 bool showSimplification = true;
+bool showTool = false;
 
 FormTree * tree;
 SphereVolume * s, * s2, * s3;
 CubeVolume * c, * c2, * c3;
 CylinderVolume * cy;
 Figure * f, * fSimp;
+
+// Tool to add volume
+CubeVolume * tool;
+float toolMoveStep = 0.1;
 
 struct spaceVoxel{
     public :
@@ -95,14 +101,16 @@ static void init(void)
 {
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 
-	s = new SphereVolume( vec3( 0,1.,0 ), 1. );
+	s = new SphereVolume( vec3( 0,0.5,0 ), 0.5 );
 	c = new CubeVolume( vec3( 0,-0.5,0 ), 1, 1, 1 );
-	c2 = new CubeVolume( vec3( 0,0,0 ), 2, 2, 2 );
+	c2 = new CubeVolume( vec3( 0,0,0 ), 1, 1, 1 );
 
 	s2 = new SphereVolume( vec3( -2,0,0 ), 1. );
 	c3 = new CubeVolume( vec3( -3,0,0 ), 2, 2, 2 );
 
 	cy = new CylinderVolume( vec3( 3,0,0 ), 1, 1 );
+
+	tool = new CubeVolume( vec3( 1,0,0 ), 0.5, 0.5, 0.5 );
 
 	// Mesh
     f    = OffFile::readFile( "maillages/triceratops" );
@@ -210,7 +218,7 @@ void drawVolumeForm( VolumeForm * form, float voxelDimension, vec3 color, GLenum
 }
 
 bool isSpaceVoxelVisible( spaceVoxel voxel ){
-    return voxel.value > 0;
+    return voxel.value > showThreshold;
 }
 
 void selectVisibleVoxels( spaceVoxel *** spaceMatrix ){
@@ -279,7 +287,7 @@ void fillSpace( FormTree * formTree, float voxelDimension ){
 
                 space[w][h][d].voxel = v;
                 if( formTree->voxelVeticesInside( *v ) || formTree->isCenterInsideVoxel( *v ) ){
-                    space[w][h][d].value = 1;
+                    space[w][h][d].value = 5;
                 }
                 else{
                     space[w][h][d].value = 0;
@@ -321,7 +329,7 @@ void fillSpaceWithFigure( Figure * figure, float voxelDimension ){
                 std::deque<Point3d *> vertices = figure->voxelVeticesInsideFigure( *v );
 
                 if( vertices.size() > 0 ){//|| figure->isCenterInsideVoxel( *v ) ){
-                    space[w][h][d].value = 1;
+                    space[w][h][d].value = 5;
                     space[w][h][d].vertices = vertices;
                 }
                 else{
@@ -339,13 +347,16 @@ void drawSpace( std::deque<spaceVoxel*> voxels, spaceVoxel *** spaceMatrix, floa
         drawVoxel( *(voxels[i]->voxel), color, mode, considerLight, lightPosition );
     }
 
-    if( drawVoxelEdges ){
-        FOR( w, spaceW ){
-            FOR( h, spaceH){
-                FOR( d, spaceD ){
-                    if( !isSpaceVoxelVisible( spaceMatrix[w][h][d]) ){
+    FOR( w, spaceW ){
+        FOR( h, spaceH){
+            FOR( d, spaceD ){
+                if( drawVoxelEdges ){
+                    //if( !isSpaceVoxelVisible( spaceMatrix[w][h][d]) ){
                         drawVoxel( *(spaceMatrix[w][h][d].voxel), red, GL_LINE_LOOP, false, lightPosition );
-                    }
+                    //}
+                }
+                if( showTool && (tool->voxelVeticesInside( *(spaceMatrix[w][h][d].voxel) ).size() > 0 || tool->isCenterInsideVoxel( *(spaceMatrix[w][h][d].voxel) )) ){
+                    drawVoxel( *(spaceMatrix[w][h][d].voxel), blue, mode, considerLight, lightPosition );
                 }
             }
         }
@@ -422,7 +433,7 @@ Figure * Simplification( Figure * figure )
 	//result->centralizeFigure();
 	return result;
 }
-//*
+
 Figure * SubDivision( Figure * figure )
 {
     std::deque<Point3d*> newPoints;
@@ -553,7 +564,7 @@ void display(void)
         }
         else{
             // Draw Voxels
-            drawSpace( selectedVoxels, space, voxel_dimension, white, GL_POLYGON, drawVoxelEdges, considerLight, lightPosition );
+            drawSpace( selectedVoxels, space, voxel_dimension, white, GL_POLYGON, false, considerLight, lightPosition );
         }
 	}
 
@@ -629,6 +640,22 @@ void DrawAxes(){
 	glEnd();
 }
 
+void useTool( int value, spaceVoxel *** spaceMatrix ){
+    if( showTool ){
+        FOR( w, spaceW ){
+            FOR( h, spaceH){
+                FOR( d, spaceD ){
+                    if( tool->voxelVeticesInside( *(spaceMatrix[w][h][d].voxel) ).size() > 0 || tool->isCenterInsideVoxel( *(spaceMatrix[w][h][d].voxel) ) ){
+                        spaceMatrix[w][h][d].value += value;
+                    }
+                }
+            }
+        }
+
+        selectVisibleVoxels( spaceMatrix );
+    }
+}
+
 /* Au cas ou la fenetre est modifiee ou deplacee */
 void reshape(int w, int h)
 {
@@ -649,9 +676,6 @@ void reshape(int w, int h)
 void keyboard(unsigned char key, int x, int y)
 {
    switch (key) {
-    case '0': case '1': case '2': case '3':
-        //selectedControlPoint = key - '0';
-        break;
     case 'g': case 'G':
         drawVoxelEdges = !drawVoxelEdges;
         break;
@@ -671,6 +695,56 @@ void keyboard(unsigned char key, int x, int y)
         voxel_dimension /= 2.;
         fillSpace();
         break;
+
+    // TOOL
+    // ENABLE
+    case 't': case 'T':
+        showTool = !showTool;
+        break;
+    // USE
+    case '1':   // Add
+        if( showTool ) useTool( -1, space );
+        break;
+    case '3':   // Remove
+        if( showTool ) useTool( 1, space );
+        break;
+    case '7':   // Add
+        showThreshold-=1;
+        selectVisibleVoxels( space );
+        break;
+    case '9':   // Remove
+        showThreshold+=1;
+        selectVisibleVoxels( space );
+        break;
+    // MOVE
+    // UP DOWN
+    case '8':
+        tool->setCenter( vec3( tool->getCenter().getX(), tool->getCenter().getY()+toolMoveStep, tool->getCenter().getZ() ) );
+        break;
+    case '2':
+        tool->setCenter( vec3( tool->getCenter().getX(), tool->getCenter().getY()-toolMoveStep, tool->getCenter().getZ()) );
+        break;
+    // LEFT RIGHT
+    case '4':
+        tool->setCenter( vec3( tool->getCenter().getX()-toolMoveStep, tool->getCenter().getY(), tool->getCenter().getZ() ) );
+        break;
+    case '6':
+        tool->setCenter( vec3( tool->getCenter().getX()+toolMoveStep, tool->getCenter().getY(), tool->getCenter().getZ() ) );
+        break;
+    // DIAGONAL DOWN
+    /*case '1':
+        tool->setCenter( vec3( tool->getCenter().getX()-toolMoveStep, tool->getCenter().getY()-toolMoveStep, tool->getCenter().getZ() ) );
+        break;
+    case '3':
+        tool->setCenter( vec3( tool->getCenter().getX()+toolMoveStep, tool->getCenter().getY()-toolMoveStep, tool->getCenter().getZ() ) );
+        break;
+    // DIAGONAL TOP
+    case '7':
+        tool->setCenter( vec3( tool->getCenter().getX()-toolMoveStep, tool->getCenter().getY()+toolMoveStep, tool->getCenter().getZ() ) );
+        break;
+    case '9':
+        tool->setCenter( vec3( tool->getCenter().getX()+toolMoveStep, tool->getCenter().getY()+toolMoveStep, tool->getCenter().getZ() ) );
+        break;*/
 
    case ESC:
       exit(0);
